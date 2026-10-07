@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZLENIX</title>
+<meta name="description" content="ZLENIX — jeux pixel. GRIDFIGHT : roguelike tactique au tour par tour où ta barre de vie est une grille.">
+<meta name="theme-color" content="#1a1c2c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%231a1c2c'/%3E%3Cpath d='M1 1h6v1H5v1H4v1H3v1H2v1h5v1H1V6h1V5h1V4h1V3h1V2H1z' fill='%2373eff7'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* Sweetie 16 — the palette GRIDFIGHT uses */
+  :root {
+    --night: #1a1c2c; --plum: #5d275d; --red: #b13e53; --orange: #ef7d57;
+    --yellow: #ffcd75; --lime: #a7f070; --green: #38b764; --teal: #257179;
+    --navy: #29366f; --blue: #3b5dc9; --sky: #41a6f6; --cyan: #73eff7;
+    --white: #f4f4f4; --mist: #94b0c2; --slate: #566c86; --ink: #333c57;
+    --px: 4px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--night);
+    color: var(--white);
+    font-family: "VT323", ui-monospace, monospace;
+    font-size: 22px;
+    line-height: 1.25;
+    image-rendering: pixelated;
+    overflow-x: hidden;
+  }
+  /* Starfield: hard-edged pixels, slow drift */
+  .stars, .stars::after {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(var(--white) 1px, transparent 1.5px),
+      radial-gradient(var(--sky) 1px, transparent 1.5px),
+      radial-gradient(var(--yellow) 1px, transparent 1.5px);
+    background-size: 97px 113px, 151px 89px, 211px 173px;
+    background-position: 0 0, 40px 60px, 90px 20px;
+    opacity: .55;
+    animation: drift 120s linear infinite;
+  }
+  .stars::after { content: ""; background-size: 61px 79px, 127px 101px, 181px 149px; opacity: .35; animation-duration: 70s; }
+  @keyframes drift { to { background-position: 0 1000px, 40px 1060px, 90px 1020px; } }
+  /* CRT scanlines */
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 3;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,.18) 0 2px, transparent 2px 4px);
+  }
+
+  main {
+    position: relative; z-index: 1;
+    min-height: 100svh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 40px; padding: 48px 16px;
+    text-align: center;
+  }
+
+  /* ZLENIX logo: pixel letters with a hard drop shadow + glitch flicker */
+  h1 {
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(40px, 13vw, 112px);
+    letter-spacing: .06em;
+    color: var(--cyan);
+    text-shadow:
+      var(--px) var(--px) 0 var(--blue),
+      calc(var(--px) * 2) calc(var(--px) * 2) 0 var(--navy),
+      calc(var(--px) * 3) calc(var(--px) * 3) 0 var(--ink);
+    animation: flicker 6s steps(1) infinite;
+  }
+  @keyframes flicker {
+    0%, 94%, 100% { transform: none; color: var(--cyan); }
+    95% { transform: translateX(-3px); color: var(--white); }
+    96% { transform: translateX(3px); color: var(--lime); }
+    97% { transform: none; }
+  }
+  .tagline {
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(10px, 2.6vw, 14px);
+    color: var(--yellow);
+    margin-top: 18px;
+    letter-spacing: .12em;
+  }
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Game card with a pixel border */
+  .card {
+    width: min(560px, 100%);
+    background: var(--ink);
+    padding: 28px 24px 30px;
+    box-shadow:
+      0 calc(var(--px) * -1) 0 var(--white), 0 var(--px) 0 var(--white),
+      calc(var(--px) * -1) 0 0 var(--white), var(--px) 0 0 var(--white),
+      0 calc(var(--px) * 3) 0 var(--night), calc(var(--px) * 2) calc(var(--px) * 3) 0 var(--night);
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .label {
+    font-family: "Press Start 2P", monospace; font-size: 10px;
+    color: var(--night); background: var(--lime); padding: 6px 8px; letter-spacing: .1em;
+  }
+  h2 {
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(22px, 6vw, 34px);
+    color: var(--orange);
+    text-shadow: var(--px) var(--px) 0 var(--plum);
+  }
+  .pitch { color: var(--mist); max-width: 30ch; font-size: 24px; }
+
+  /* The health-grid: tiles go dark one by one, then refill — GRIDFIGHT's mechanic */
+  .grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: var(--px);
+    width: min(256px, 70vw);
+  }
+  .grid i {
+    aspect-ratio: 1; background: var(--green);
+    box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 var(--teal), inset var(--px) var(--px) 0 var(--lime);
+    transition: background .1s steps(1), box-shadow .1s steps(1);
+  }
+  .grid i.off { background: var(--night); box-shadow: inset 0 0 0 var(--px) var(--slate); }
+  .grid i.hit { background: var(--red); box-shadow: inset 0 0 0 var(--px) var(--yellow); }
+
+  /* PLAY button: pressable 8-bit key */
+  .play {
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(14px, 4vw, 18px);
+    color: var(--night); text-decoration: none;
+    background: var(--yellow);
+    padding: 18px 26px;
+    box-shadow:
+      0 calc(var(--px) * -1) 0 var(--night), 0 var(--px) 0 var(--night),
+      calc(var(--px) * -1) 0 0 var(--night), var(--px) 0 0 var(--night),
+      0 calc(var(--px) * 2) 0 var(--orange), 0 calc(var(--px) * 3) 0 var(--night);
+    transform: translateY(0);
+    transition: transform .05s steps(1), box-shadow .05s steps(1);
+  }
+  .play:hover, .play:focus-visible { background: var(--white); outline: none; }
+  .play:active { transform: translateY(calc(var(--px) * 2)); box-shadow:
+      0 calc(var(--px) * -1) 0 var(--night), 0 var(--px) 0 var(--night),
+      calc(var(--px) * -1) 0 0 var(--night), var(--px) 0 0 var(--night); }
+  .url { font-size: 20px; color: var(--slate); }
+  .url a { color: var(--sky); }
+
+  footer {
+    font-family: "Press Start 2P", monospace; font-size: 9px; color: var(--slate);
+    letter-spacing: .12em;
+  }
+  footer b { color: var(--cyan); font-weight: normal; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="stars" aria-hidden="true"></div>
+<main>
+  <header>
+    <h1>ZLENIX</h1>
+    <p class="tagline">PIXEL GAMES <span class="blink">▮</span></p>
+  </header>
+
+  <section class="card" aria-labelledby="gf">
+    <span class="label">NOUVEAU JEU</span>
+    <h2 id="gf">GRIDFIGHT</h2>
+    <div class="grid" id="hp" aria-hidden="true"></div>
+    <p class="pitch">Roguelike tactique au tour par tour : ta barre de vie est une grille, et chaque attaque en éteint des carreaux.</p>
+    <a class="play" href="https://gridfight.web.app" rel="noopener">▶ JOUER</a>
+    <p class="url"><a href="https://gridfight.web.app" rel="noopener">gridfight.web.app</a></p>
+  </section>
+
+  <footer>© 2026 <b>ZLENIX</b> · INSERT COIN</footer>
+</main>
+<script>
+  // Health grid demo: random hits switch tiles off; when empty, it refills.
+  (function () {
+    var grid = document.getElementById('hp'), tiles = [];
+    for (var n = 0; n < 32; n++) { var t = document.createElement('i'); grid.appendChild(t); tiles.push(t); }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    function alive() { return tiles.filter(function (t) { return !t.classList.contains('off'); }); }
+    setInterval(function () {
+      var live = alive();
+      if (live.length === 0) { tiles.forEach(function (t) { t.className = ''; }); return; }
+      var hits = 1 + Math.floor(Math.random() * 3);
+      for (var h = 0; h < hits && live.length; h++) {
+        var t = live.splice(Math.floor(Math.random() * live.length), 1)[0];
+        t.className = 'hit';
+        setTimeout(function (x) { return function () { x.className = 'off'; }; }(t), 180);
+      }
+    }, 650);
+  })();
+</script>
+</body>
+</html>
